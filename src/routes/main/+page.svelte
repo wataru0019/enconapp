@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { user } from '$lib/stores/auth';
+	import { auth, isAuthenticated, user } from '$lib/auth';
 	import { startNewChat } from '$lib/stores/chat';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	
 	onMount(() => {
-		const unsubscribe = user.subscribe(($user) => {
-			if (!$user.isLoggedIn) {
+		const unsubscribe = isAuthenticated.subscribe(($isAuthenticated) => {
+			if (!$isAuthenticated) {
 				goto('/login');
 			}
 		});
@@ -22,17 +22,21 @@
 		goto('/history');
 	}
 
-	function goBack() {
+	function logout() {
+		auth.logout();
 		goto('/login');
 	}
 </script>
 
 <div class="main-screen">
 	<div class="header">
-		<button class="back-button" on:click={goBack}>←</button>
+		<button class="back-button" on:click={logout}>←</button>
 		<h1 class="app-title">ECApp</h1>
 	</div>
 	<div class="content">
+		{#if $user}
+			<p class="welcome">Welcome, {$user.username}!</p>
+		{/if}
 		<p class="subtitle">さあ今日も<br />英会話を続けよう！</p>
 		<div class="level-selection">
 			<p>レベルを選択</p>
@@ -88,6 +92,13 @@
 		margin: 0;
 		font-weight: bold;
 		color: #333;
+	}
+
+	.welcome {
+		font-size: 16px;
+		color: #4285f4;
+		margin: 10px 0;
+		font-weight: 500;
 	}
 
 	.subtitle {

@@ -1,30 +1,75 @@
 <script lang="ts">
-	import { login } from '$lib/stores/auth';
+	import { auth } from '$lib/auth';
 	import { goto } from '$app/navigation';
 	
 	let username = '';
 	let password = '';
+	let isLoading = false;
+	let error = '';
+	let isRegisterMode = false;
 
-	function handleLogin() {
-		if (username && password) {
-			login(username);
-			goto('/main');
+	async function handleLogin() {
+		if (!username || !password) return;
+		
+		isLoading = true;
+		error = '';
+		
+		try {
+			const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+			const response = await fetch(endpoint, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ username, password })
+			});
+			
+			const data = await response.json();
+			
+			if (response.ok) {
+				auth.login(data.token, data.user);
+				goto('/main');
+			} else {
+				error = data.error;
+			}
+		} catch (err) {
+			error = 'Network error. Please try again.';
+		} finally {
+			isLoading = false;
 		}
+	}
+
+	function toggleMode() {
+		isRegisterMode = !isRegisterMode;
+		error = '';
 	}
 </script>
 
 <div class="login-screen">
 	<h1 class="app-title">ECApp</h1>
+	
+	{#if error}
+		<div class="error-message">{error}</div>
+	{/if}
+	
 	<div class="form-group">
 		<label>Username</label>
-		<input type="text" bind:value={username} placeholder="placeholder..." />
+		<input type="text" bind:value={username} placeholder="Enter username" disabled={isLoading} />
 	</div>
 	<div class="form-group">
 		<label>Password</label>
-		<input type="password" bind:value={password} placeholder="placeholder..." />
+		<input type="password" bind:value={password} placeholder="Enter password" disabled={isLoading} />
 	</div>
-	<a href="#" class="forgot-password">forget password...</a>
-	<button class="login-button" on:click={handleLogin}>Button</button>
+	
+	<button class="login-button" on:click={handleLogin} disabled={isLoading || !username || !password}>
+		{#if isLoading}
+			Loading...
+		{:else}
+			{isRegisterMode ? 'Register' : 'Login'}
+		{/if}
+	</button>
+	
+	<a href="#" class="toggle-mode" on:click|preventDefault={toggleMode}>
+		{isRegisterMode ? 'Already have an account? Login' : 'Need an account? Register'}
+	</a>
 </div>
 
 <style>
@@ -71,11 +116,16 @@
 		box-sizing: border-box;
 	}
 
-	.forgot-password {
-		color: #666;
-		text-decoration: none;
+	.error-message {
+		background: #fee;
+		color: #c33;
+		padding: 10px;
+		border-radius: 5px;
+		margin-bottom: 20px;
+		width: 100%;
+		max-width: 300px;
+		text-align: center;
 		font-size: 14px;
-		margin-bottom: 30px;
 	}
 
 	.login-button {
@@ -86,5 +136,21 @@
 		border-radius: 25px;
 		font-size: 16px;
 		cursor: pointer;
+		margin-bottom: 20px;
+	}
+
+	.login-button:disabled {
+		background: #ccc;
+		cursor: not-allowed;
+	}
+
+	.toggle-mode {
+		color: #4285f4;
+		text-decoration: none;
+		font-size: 14px;
+	}
+
+	.toggle-mode:hover {
+		text-decoration: underline;
 	}
 </style>

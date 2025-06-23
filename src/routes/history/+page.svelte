@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { chatHistory } from '$lib/stores/chat';
-	import { user } from '$lib/stores/auth';
+	import { isAuthenticated } from '$lib/auth';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		const unsubscribe = user.subscribe(($user) => {
-			if (!$user.isLoggedIn) {
+		const unsubscribe = isAuthenticated.subscribe(($isAuthenticated) => {
+			if (!$isAuthenticated) {
 				goto('/login');
 			}
 		});
