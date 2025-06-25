@@ -16,6 +16,7 @@
 		"@sveltejs/kit": "^2.16.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@types/bcryptjs": "^3.0.0",
+		"@types/better-sqlite3": "^7.6.13",
 		"@types/jsonwebtoken": "^9.0.10",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
@@ -26,11 +27,15 @@
 	"pnpm": {
 		"onlyBuiltDependencies": [
 			"esbuild"
+		],
+		"ignoredBuiltDependencies": [
+			"better-sqlite3"
 		]
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.54.0",
 		"bcryptjs": "^3.0.2",
+		"better-sqlite3": "^12.1.1",
 		"jsonwebtoken": "^9.0.2"
 	}
 }

@@ -3,15 +3,7 @@ import type { RequestHandler } from './$types';
 import { hashPassword } from '$lib/auth/password.js';
 import { generateToken } from '$lib/auth/jwt.js';
 import { JWT_SECRET } from '$env/static/private';
-
-// Temporary user storage (will be replaced with database in Phase 3)
-let users = [
-	{
-		id: 1,
-		username: 'demo',
-		password_hash: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' // password
-	}
-];
+import { userRepo } from '$lib/db/index.js';
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
@@ -32,8 +24,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Check if user already exists
-		const existingUser = users.find(u => u.username === username);
-		if (existingUser) {
+		if (userRepo.usernameExists(username)) {
 			return json(
 				{ error: 'Username already exists' },
 				{ status: 409 }
@@ -44,13 +35,10 @@ export const POST: RequestHandler = async ({ request }) => {
 		const password_hash = await hashPassword(password);
 
 		// Create new user
-		const newUser = {
-			id: users.length + 1,
+		const newUser = userRepo.createUser({
 			username,
 			password_hash
-		};
-
-		users.push(newUser);
+		});
 
 		// Generate JWT token
 		const token = generateToken({

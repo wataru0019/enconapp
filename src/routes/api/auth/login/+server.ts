@@ -3,15 +3,7 @@ import type { RequestHandler } from './$types';
 import { verifyPassword } from '$lib/auth/password.js';
 import { generateToken } from '$lib/auth/jwt.js';
 import { JWT_SECRET } from '$env/static/private';
-
-// Temporary user storage (will be replaced with database in Phase 3)
-const users = [
-	{
-		id: 1,
-		username: 'demo',
-		password_hash: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' // password
-	}
-];
+import { userRepo } from '$lib/db/index.js';
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
@@ -25,7 +17,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Find user
-		const user = users.find(u => u.username === username);
+		const user = userRepo.getUserByUsername(username);
 		if (!user) {
 			return json(
 				{ error: 'Invalid credentials' },
