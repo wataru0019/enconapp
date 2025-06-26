@@ -1,0 +1,29 @@
+name = "enconapp"
+compatibility_date = "2024-12-16"
+compatibility_flags = ["nodejs_compat"]
+
+# For SvelteKit adapter-cloudflare
+main = ".svelte-kit/cloudflare-workers/index.js"
+assets = { directory = ".svelte-kit/cloudflare-static", binding = "ASSETS" }
+
+# Environment variables (will be set via CLI or dashboard)
+[vars]
+# JWT_SECRET will be set as a secret
+# ANTHROPIC_API_KEY will be set as a secret
+
+
+# Development configuration
+[env.development]
+vars = { NODE_ENV = "development" }
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "enconapp-db"
+database_id = "da35d3d4-b6a7-48f1-ad19-9263a706413a"
+
+# Production configuration  
+[env.production]
+vars = { NODE_ENV = "production" }
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "enconapp-db"
+database_id = "da35d3d4-b6a7-48f1-ad19-9263a706413a"

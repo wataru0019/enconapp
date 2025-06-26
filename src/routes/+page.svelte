@@ -8,20 +8,32 @@
 
 	onMount(async () => {
 		if (browser) {
-			await auth.initialize();
-			
-			const unsubscribe = auth.subscribe(($auth) => {
-				authState = $auth;
-				if (!$auth.isLoading) {
-					if ($auth.isAuthenticated) {
-						goto('/main');
-					} else {
+			try {
+				await auth.initialize();
+				
+				const unsubscribe = auth.subscribe(($auth) => {
+					authState = $auth;
+					if (!$auth.isLoading) {
+						if ($auth.isAuthenticated) {
+							goto('/main');
+						} else {
+							goto('/login');
+						}
+					}
+				});
+				
+				// Fallback - if auth takes too long, redirect to login
+				setTimeout(() => {
+					if (authState.isLoading) {
 						goto('/login');
 					}
-				}
-			});
-			
-			return unsubscribe;
+				}, 2000);
+				
+				return unsubscribe;
+			} catch (error) {
+				console.error('Auth initialization failed:', error);
+				goto('/login');
+			}
 		}
 	});
 </script>

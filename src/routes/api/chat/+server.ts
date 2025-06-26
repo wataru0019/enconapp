@@ -29,6 +29,13 @@ export const POST: RequestHandler = async ({ request }) => {
 			return json({ error: 'Level is required' }, { status: 400 });
 		}
 
+		// Validate level value
+		const validLevels = ['beginner', 'intermediate', 'advanced'] as const;
+		if (!validLevels.includes(level)) {
+			console.error('Invalid level value:', level);
+			return json({ error: `Invalid level: ${level}. Must be one of: ${validLevels.join(', ')}` }, { status: 400 });
+		}
+
 		// Get or create chat session
 		let currentSessionId = sessionId;
 		if (!currentSessionId) {

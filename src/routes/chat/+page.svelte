@@ -19,7 +19,7 @@
 			}
 		});
 
-		level = $page.url.searchParams.get('level') || '初級者';
+		level = $page.url.searchParams.get('level') || 'beginner';
 		
 		return unsubscribe;
 	});
@@ -76,7 +76,7 @@
 <div class="chat-screen">
 	<div class="header">
 		<button class="back-button" on:click={goBack}>←</button>
-		<h2>{level}</h2>
+		<h2>{level === 'beginner' ? '初級者' : level === 'intermediate' ? '中級者' : level === 'advanced' ? '上級者' : level}</h2>
 		<button class="dictionary-button" on:click={toggleDictionary}>辞書</button>
 	</div>
 	<div class="chat-messages">

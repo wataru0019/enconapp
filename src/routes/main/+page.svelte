@@ -41,16 +41,16 @@
 		<div class="level-selection">
 			<p>レベルを選択</p>
 			<div class="level-buttons">
-				<button class="level-button" on:click={() => selectLevel('初級者')}>初級者</button>
-				<button class="level-button" on:click={() => selectLevel('中級者')}>中級者</button>
-				<button class="level-button" on:click={() => selectLevel('上級者')}>上級者</button>
+				<button class="level-button" on:click={() => selectLevel('beginner')}>初級者</button>
+				<button class="level-button" on:click={() => selectLevel('intermediate')}>中級者</button>
+				<button class="level-button" on:click={() => selectLevel('advanced')}>上級者</button>
 			</div>
 		</div>
 		<div class="topic-section">
 			<p>英語で気になる話題を話かけてみよう</p>
 			<div class="topic-buttons">
-				<button class="topic-button" on:click={() => selectLevel('初級者')}>What do you say "Daihuku" in English?</button>
-				<button class="topic-button" on:click={() => selectLevel('初級者')}>What do you say "Daihuku" in English?</button>
+				<button class="topic-button" on:click={() => selectLevel('beginner')}>What do you say "Daihuku" in English?</button>
+				<button class="topic-button" on:click={() => selectLevel('beginner')}>What do you say "Daihuku" in English?</button>
 			</div>
 		</div>
 		<div class="message-input">
