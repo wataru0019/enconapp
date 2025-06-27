@@ -108,7 +108,11 @@
 </div>
 
 {#if showDictionary}
-	<div class="dictionary-overlay" on:click={toggleDictionary}></div>
+	<div class="dictionary-overlay" 
+		 role="button" 
+		 tabindex="0"
+		 on:click={toggleDictionary}
+		 on:keydown={(e) => e.key === 'Escape' && toggleDictionary()}></div>
 	<div class="dictionary-panel" transition:slide={{ duration: 300, axis: 'x' }}>
 		<div class="dictionary-header">
 			<h3>辞書</h3>

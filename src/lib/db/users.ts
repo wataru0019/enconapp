@@ -7,7 +7,7 @@ export class UserRepository {
 	}
 
 	// Create a new user
-	createUser(userData: CreateUserData): User {
+	async createUser(userData: CreateUserData): Promise<User> {
 		const db = this.getDb();
 		const stmt = db.prepare(`
 			INSERT INTO users (username, password_hash)
@@ -15,18 +15,18 @@ export class UserRepository {
 		`);
 		
 		const result = stmt.run(userData.username, userData.password_hash);
-		return this.getUserById(result.lastInsertRowid as number)!;
+		return (await this.getUserById(result.lastInsertRowid as number))!;
 	}
 
 	// Get user by ID
-	getUserById(id: number): User | null {
+	async getUserById(id: number): Promise<User | null> {
 		const db = this.getDb();
 		const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
 		return stmt.get(id) as User || null;
 	}
 
 	// Get user by username
-	getUserByUsername(username: string): User | null {
+	async getUserByUsername(username: string): Promise<User | null> {
 		const db = this.getDb();
 		const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
 		return stmt.get(username) as User || null;
@@ -60,7 +60,7 @@ export class UserRepository {
 	}
 
 	// Check if username exists
-	usernameExists(username: string): boolean {
+	async usernameExists(username: string): Promise<boolean> {
 		const db = this.getDb();
 		const stmt = db.prepare('SELECT 1 FROM users WHERE username = ?');
 		return !!stmt.get(username);

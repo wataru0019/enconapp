@@ -20,7 +20,16 @@ import { isCloudflareEnvironment } from './database-d1.js';
 
 // Environment-aware repository factory
 function createRepositories() {
-  if (isCloudflareEnvironment()) {
+  const isCloudflare = isCloudflareEnvironment();
+  console.log('Environment detection - isCloudflareEnvironment():', isCloudflare);
+  console.log('globalThis.caches:', typeof globalThis.caches);
+  console.log('globalThis.navigator:', typeof globalThis.navigator);
+  if (typeof globalThis.navigator !== 'undefined') {
+    console.log('navigator.userAgent:', globalThis.navigator.userAgent);
+  }
+  
+  if (isCloudflare) {
+    console.log('Using D1 repositories for Cloudflare Workers');
     // Use D1 repositories in Cloudflare Workers
     return {
       userRepo: new UserRepositoryD1(),
@@ -28,6 +37,7 @@ function createRepositories() {
       messageRepo: new MessageRepositoryD1()
     };
   } else {
+    console.log('Using SQLite repositories for development');
     // Use SQLite repositories in development
     return {
       userRepo: new UserRepository(),

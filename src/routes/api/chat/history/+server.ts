@@ -4,7 +4,7 @@ import { verifyToken } from '$lib/auth/jwt.js';
 import { JWT_SECRET } from '$env/static/private';
 import { chatSessionRepo } from '$lib/db/index.js';
 
-export const GET: RequestHandler = async ({ request, url }) => {
+export const GET: RequestHandler = async ({ request, url, platform }) => {
 	try {
 		// Verify authentication
 		const authHeader = request.headers.get('authorization');
@@ -13,7 +13,11 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		}
 
 		const token = authHeader.substring(7);
-		const payload = verifyToken(token, JWT_SECRET);
+		
+		// Use JWT_SECRET from platform or fallback
+		const jwtSecret = platform?.env?.JWT_SECRET || JWT_SECRET;
+		const payload = verifyToken(token, jwtSecret);
+		
 		if (!payload) {
 			return json({ error: 'Invalid or expired token' }, { status: 401 });
 		}
@@ -23,7 +27,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		const offset = parseInt(url.searchParams.get('offset') || '0');
 
 		// Get chat sessions for the user
-		const sessions = chatSessionRepo.getChatSessionsByUserId(payload.userId, limit, offset);
+		const sessions = await chatSessionRepo.getChatSessionsByUserId(payload.userId, limit, offset);
 
 		return json({
 			sessions,

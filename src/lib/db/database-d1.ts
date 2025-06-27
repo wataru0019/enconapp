@@ -85,10 +85,13 @@ export async function initializeD1Schema(): Promise<void> {
     ];
     
     for (const statement of schemaStatements) {
-      await db.exec(statement);
+      try {
+        await db.prepare(statement).run();
+      } catch (error) {
+        console.error('Failed to execute SQL statement:', error);
+        throw error;
+      }
     }
-    
-    console.log('D1 database schema initialized successfully');
   } catch (error) {
     console.error('Failed to initialize D1 schema:', error);
     throw error;
@@ -97,7 +100,19 @@ export async function initializeD1Schema(): Promise<void> {
 
 // Check if we're running in Cloudflare Workers environment
 export function isCloudflareEnvironment(): boolean {
-  return typeof globalThis.process === 'undefined' && 
-         typeof globalThis.navigator !== 'undefined' && 
-         globalThis.navigator.userAgent === 'Cloudflare-Workers';
+  // Multiple checks for Cloudflare Workers environment
+  const hasCloudflareGlobals = typeof globalThis.caches !== 'undefined' && 
+                               typeof globalThis.crypto !== 'undefined' &&
+                               typeof globalThis.fetch !== 'undefined';
+  
+  const hasWorkersSpecific = typeof globalThis.Request !== 'undefined' && 
+                            typeof globalThis.Response !== 'undefined';
+  
+  const isNotNode = typeof globalThis.process === 'undefined' && 
+                    typeof globalThis.Buffer === 'undefined';
+  
+  const hasCloudflareUserAgent = typeof globalThis.navigator !== 'undefined' && 
+                                globalThis.navigator.userAgent === 'Cloudflare-Workers';
+  
+  return isNotNode && hasCloudflareGlobals && hasWorkersSpecific || hasCloudflareUserAgent;
 }

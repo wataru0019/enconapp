@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { auth } from '$lib/auth';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	
 	let username = '';
 	let password = '';
@@ -9,7 +10,10 @@
 	let isRegisterMode = false;
 
 	async function handleLogin() {
-		if (!username || !password) return;
+		if (!username || !password) {
+			error = 'Please enter both username and password';
+			return;
+		}
 		
 		isLoading = true;
 		error = '';
@@ -41,6 +45,11 @@
 		isRegisterMode = !isRegisterMode;
 		error = '';
 	}
+
+	onMount(() => {
+		// Set page title
+		document.title = 'EnconApp - Login';
+	});
 </script>
 
 <div class="login-screen">
@@ -51,15 +60,15 @@
 	{/if}
 	
 	<div class="form-group">
-		<label>Username</label>
-		<input type="text" bind:value={username} placeholder="Enter username" disabled={isLoading} />
+		<label for="username">Username</label>
+		<input id="username" type="text" bind:value={username} placeholder="Enter username" disabled={isLoading} />
 	</div>
 	<div class="form-group">
-		<label>Password</label>
-		<input type="password" bind:value={password} placeholder="Enter password" disabled={isLoading} />
+		<label for="password">Password</label>
+		<input id="password" type="password" bind:value={password} placeholder="Enter password" disabled={isLoading} />
 	</div>
 	
-	<button class="login-button" on:click={handleLogin} disabled={isLoading || !username || !password}>
+	<button class="login-button" on:click={handleLogin} disabled={isLoading}>
 		{#if isLoading}
 			Loading...
 		{:else}
@@ -67,10 +76,11 @@
 		{/if}
 	</button>
 	
-	<a href="#" class="toggle-mode" on:click|preventDefault={toggleMode}>
+	<button type="button" class="toggle-mode" on:click={toggleMode}>
 		{isRegisterMode ? 'Already have an account? Login' : 'Need an account? Register'}
-	</a>
+	</button>
 </div>
+
 
 <style>
 	.login-screen {
@@ -146,8 +156,11 @@
 
 	.toggle-mode {
 		color: #4285f4;
-		text-decoration: none;
+		background: none;
+		border: none;
 		font-size: 14px;
+		cursor: pointer;
+		text-decoration: none;
 	}
 
 	.toggle-mode:hover {

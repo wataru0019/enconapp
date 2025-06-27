@@ -13,7 +13,14 @@ import type {
 // Base D1 Repository class
 abstract class BaseD1Repository {
   protected getDb(): D1Database {
-    return getD1Database();
+    try {
+      const db = getD1Database();
+      console.log('D1 database retrieved successfully');
+      return db;
+    } catch (error) {
+      console.error('Failed to get D1 database:', error);
+      throw error;
+    }
   }
 }
 
@@ -88,6 +95,14 @@ export class UserRepositoryD1 extends BaseD1Repository {
     const stmt = db.prepare('DELETE FROM users WHERE id = ?');
     const result = await stmt.bind(id).run();
     return result.success && (result.meta.changes || 0) > 0;
+  }
+
+  // Check if username exists
+  async usernameExists(username: string): Promise<boolean> {
+    const db = this.getDb();
+    const stmt = db.prepare('SELECT 1 FROM users WHERE username = ?');
+    const result = await stmt.bind(username).first();
+    return !!result;
   }
 }
 

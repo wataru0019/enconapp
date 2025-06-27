@@ -5,7 +5,7 @@ import { generateToken } from '$lib/auth/jwt.js';
 import { JWT_SECRET } from '$env/static/private';
 import { userRepo } from '$lib/db/index.js';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		const { username, password } = await request.json();
 
@@ -17,7 +17,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Find user
-		const user = userRepo.getUserByUsername(username);
+		const user = await userRepo.getUserByUsername(username);
 		if (!user) {
 			return json(
 				{ error: 'Invalid credentials' },
@@ -35,10 +35,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Generate JWT token
+		const jwtSecret = platform?.env?.JWT_SECRET || JWT_SECRET;
 		const token = generateToken({
 			userId: user.id,
 			username: user.username
-		}, JWT_SECRET);
+		}, jwtSecret);
 
 		return json({
 			token,

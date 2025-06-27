@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 import { verifyToken } from '$lib/auth/jwt.js';
 import { JWT_SECRET } from '$env/static/private';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		const { token } = await request.json();
 
@@ -14,7 +14,10 @@ export const POST: RequestHandler = async ({ request }) => {
 			);
 		}
 
-		const payload = verifyToken(token, JWT_SECRET);
+		// Use JWT_SECRET from platform or fallback
+		const jwtSecret = platform?.env?.JWT_SECRET || JWT_SECRET;
+		
+		const payload = verifyToken(token, jwtSecret);
 		if (!payload) {
 			return json(
 				{ error: 'Invalid or expired token' },

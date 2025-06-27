@@ -5,16 +5,22 @@ import { verifyToken } from '$lib/auth/jwt.js';
 import { JWT_SECRET } from '$env/static/private';
 import { chatSessionRepo, messageRepo } from '$lib/db/index.js';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		// Verify authentication
 		const authHeader = request.headers.get('authorization');
+		
 		if (!authHeader || !authHeader.startsWith('Bearer ')) {
 			return json({ error: 'Authorization required' }, { status: 401 });
 		}
 
 		const token = authHeader.substring(7);
-		const payload = verifyToken(token, JWT_SECRET);
+		
+		// Use JWT_SECRET from platform or fallback
+		const jwtSecret = platform?.env?.JWT_SECRET || JWT_SECRET;
+		
+		const payload = verifyToken(token, jwtSecret);
+		
 		if (!payload) {
 			return json({ error: 'Invalid or expired token' }, { status: 401 });
 		}
@@ -39,7 +45,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		// Get or create chat session
 		let currentSessionId = sessionId;
 		if (!currentSessionId) {
-			const session = chatSessionRepo.createChatSession({
+			const session = await chatSessionRepo.createChatSession({
 				user_id: payload.userId,
 				level: level as 'beginner' | 'intermediate' | 'advanced'
 			});
@@ -49,7 +55,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		// Save user message to database
 		const userMessage = messages[messages.length - 1];
 		if (userMessage && userMessage.sender === 'user') {
-			messageRepo.createMessage({
+			await messageRepo.createMessage({
 				session_id: currentSessionId,
 				sender: 'user',
 				message: userMessage.message
@@ -69,7 +75,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Save assistant response to database
-		const assistantMessage = messageRepo.createMessage({
+		const assistantMessage = await messageRepo.createMessage({
 			session_id: currentSessionId,
 			sender: 'assistant',
 			message: response.message
