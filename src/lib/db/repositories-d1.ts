@@ -7,7 +7,12 @@ import type {
   CreateChatSessionData, 
   Message, 
   CreateMessageData,
-  ChatSessionWithMessages 
+  ChatSessionWithMessages,
+  VocabularyWord,
+  CreateVocabularyData,
+  UpdateVocabularyData,
+  TranslationHistory,
+  CreateTranslationData
 } from './types.js';
 
 // Base D1 Repository class
@@ -287,5 +292,266 @@ export class MessageRepositoryD1 extends BaseD1Repository {
     const stmt = db.prepare('DELETE FROM messages WHERE session_id = ?');
     const result = await stmt.bind(sessionId).run();
     return result.success;
+  }
+}
+
+// Vocabulary Repository for D1
+export class VocabularyRepositoryD1 extends BaseD1Repository {
+  // Create a new vocabulary word
+  async createVocabulary(data: CreateVocabularyData): Promise<VocabularyWord> {
+    const db = this.getDb();
+    const stmt = db.prepare(`
+      INSERT INTO vocabulary (
+        user_id, japanese_word, english_translation, 
+        category, difficulty_level, notes, source
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    const result = await stmt.bind(
+      data.user_id,
+      data.japanese_word,
+      data.english_translation,
+      data.category || 'general',
+      data.difficulty_level || 'beginner',
+      data.notes || null,
+      data.source || 'manual'
+    ).run();
+    
+    if (!result.success) {
+      throw new Error(`Failed to create vocabulary: ${result.error}`);
+    }
+    
+    const vocabId = result.meta.last_row_id!;
+    const vocab = await this.getVocabularyById(vocabId);
+    if (!vocab) {
+      throw new Error('Failed to retrieve created vocabulary');
+    }
+    
+    return vocab;
+  }
+
+  // Get vocabulary by ID
+  async getVocabularyById(id: number): Promise<VocabularyWord | null> {
+    const db = this.getDb();
+    const stmt = db.prepare('SELECT * FROM vocabulary WHERE id = ?');
+    return await stmt.bind(id).first<VocabularyWord>();
+  }
+
+  // Get vocabulary by user ID
+  async getVocabularyByUserId(userId: number, limit = 50, offset = 0): Promise<VocabularyWord[]> {
+    const db = this.getDb();
+    const stmt = db.prepare(`
+      SELECT * FROM vocabulary 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC 
+      LIMIT ? OFFSET ?
+    `);
+    const result = await stmt.bind(userId, limit, offset).all<VocabularyWord>();
+    return result.results || [];
+  }
+
+  // Get vocabulary by category
+  async getVocabularyByCategory(userId: number, category: string): Promise<VocabularyWord[]> {
+    const db = this.getDb();
+    const stmt = db.prepare(`
+      SELECT * FROM vocabulary 
+      WHERE user_id = ? AND category = ? 
+      ORDER BY created_at DESC
+    `);
+    const result = await stmt.bind(userId, category).all<VocabularyWord>();
+    return result.results || [];
+  }
+
+  // Get categories for user
+  async getCategories(userId: number): Promise<string[]> {
+    const db = this.getDb();
+    const stmt = db.prepare(`
+      SELECT DISTINCT category 
+      FROM vocabulary 
+      WHERE user_id = ? 
+      ORDER BY category
+    `);
+    const result = await stmt.bind(userId).all<{category: string}>();
+    return (result.results || []).map(row => row.category);
+  }
+
+  // Update vocabulary
+  async updateVocabulary(id: number, data: UpdateVocabularyData): Promise<VocabularyWord | null> {
+    const updateFields = [];
+    const values = [];
+
+    if (data.japanese_word !== undefined) {
+      updateFields.push('japanese_word = ?');
+      values.push(data.japanese_word);
+    }
+    if (data.english_translation !== undefined) {
+      updateFields.push('english_translation = ?');
+      values.push(data.english_translation);
+    }
+    if (data.category !== undefined) {
+      updateFields.push('category = ?');
+      values.push(data.category);
+    }
+    if (data.difficulty_level !== undefined) {
+      updateFields.push('difficulty_level = ?');
+      values.push(data.difficulty_level);
+    }
+    if (data.notes !== undefined) {
+      updateFields.push('notes = ?');
+      values.push(data.notes);
+    }
+
+    if (updateFields.length === 0) {
+      return this.getVocabularyById(id);
+    }
+
+    updateFields.push('updated_at = datetime(\'now\')');
+    values.push(id);
+
+    const db = this.getDb();
+    const stmt = db.prepare(`
+      UPDATE vocabulary 
+      SET ${updateFields.join(', ')} 
+      WHERE id = ?
+    `);
+    
+    const result = await stmt.bind(...values).run();
+    
+    if (!result.success) {
+      throw new Error(`Failed to update vocabulary: ${result.error}`);
+    }
+    
+    return this.getVocabularyById(id);
+  }
+
+  // Delete vocabulary
+  async deleteVocabulary(id: number): Promise<boolean> {
+    const db = this.getDb();
+    const stmt = db.prepare('DELETE FROM vocabulary WHERE id = ?');
+    const result = await stmt.bind(id).run();
+    return result.success && (result.meta.changes || 0) > 0;
+  }
+
+  // Search vocabulary
+  async searchVocabulary(userId: number, query: string): Promise<VocabularyWord[]> {
+    const db = this.getDb();
+    const stmt = db.prepare(`
+      SELECT * FROM vocabulary 
+      WHERE user_id = ? 
+      AND (japanese_word LIKE ? OR english_translation LIKE ? OR notes LIKE ?)
+      ORDER BY created_at DESC
+    `);
+    const searchPattern = `%${query}%`;
+    const result = await stmt.bind(userId, searchPattern, searchPattern, searchPattern).all<VocabularyWord>();
+    return result.results || [];
+  }
+
+  // Count vocabulary for user
+  async countVocabulary(userId: number): Promise<number> {
+    const db = this.getDb();
+    const stmt = db.prepare('SELECT COUNT(*) as count FROM vocabulary WHERE user_id = ?');
+    const result = await stmt.bind(userId).first<{count: number}>();
+    return result?.count || 0;
+  }
+}
+
+// Translation History Repository for D1
+export class TranslationHistoryRepositoryD1 extends BaseD1Repository {
+  // Create a new translation
+  async createTranslation(data: CreateTranslationData): Promise<TranslationHistory> {
+    const db = this.getDb();
+    const stmt = db.prepare(`
+      INSERT INTO translation_history (
+        user_id, japanese_text, english_translation, 
+        grammar_feedback, natural_suggestion
+      ) VALUES (?, ?, ?, ?, ?)
+    `);
+    
+    const result = await stmt.bind(
+      data.user_id,
+      data.japanese_text,
+      data.english_translation,
+      data.grammar_feedback || null,
+      data.natural_suggestion || null
+    ).run();
+    
+    if (!result.success) {
+      throw new Error(`Failed to create translation: ${result.error}`);
+    }
+    
+    const translationId = result.meta.last_row_id!;
+    const translation = await this.getTranslationById(translationId);
+    if (!translation) {
+      throw new Error('Failed to retrieve created translation');
+    }
+    
+    return translation;
+  }
+
+  // Get translation by ID
+  async getTranslationById(id: number): Promise<TranslationHistory | null> {
+    const db = this.getDb();
+    const stmt = db.prepare('SELECT * FROM translation_history WHERE id = ?');
+    return await stmt.bind(id).first<TranslationHistory>();
+  }
+
+  // Get translations by user ID
+  async getTranslationsByUserId(userId: number, limit = 50, offset = 0): Promise<TranslationHistory[]> {
+    const db = this.getDb();
+    const stmt = db.prepare(`
+      SELECT * FROM translation_history 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC 
+      LIMIT ? OFFSET ?
+    `);
+    const result = await stmt.bind(userId, limit, offset).all<TranslationHistory>();
+    return result.results || [];
+  }
+
+  // Delete translation
+  async deleteTranslation(id: number): Promise<boolean> {
+    const db = this.getDb();
+    const stmt = db.prepare('DELETE FROM translation_history WHERE id = ?');
+    const result = await stmt.bind(id).run();
+    return result.success && (result.meta.changes || 0) > 0;
+  }
+
+  // Search translations
+  async searchTranslations(userId: number, query: string): Promise<TranslationHistory[]> {
+    const db = this.getDb();
+    const stmt = db.prepare(`
+      SELECT * FROM translation_history 
+      WHERE user_id = ? 
+      AND (japanese_text LIKE ? OR english_translation LIKE ?)
+      ORDER BY created_at DESC
+    `);
+    const searchPattern = `%${query}%`;
+    const result = await stmt.bind(userId, searchPattern, searchPattern).all<TranslationHistory>();
+    return result.results || [];
+  }
+
+  // Count translations for user
+  async countTranslations(userId: number): Promise<number> {
+    const db = this.getDb();
+    const stmt = db.prepare('SELECT COUNT(*) as count FROM translation_history WHERE user_id = ?');
+    const result = await stmt.bind(userId).first<{count: number}>();
+    return result?.count || 0;
+  }
+
+  // Delete old translations (keep latest N)
+  async deleteOldTranslations(userId: number, keepCount = 100): Promise<number> {
+    const db = this.getDb();
+    const stmt = db.prepare(`
+      DELETE FROM translation_history 
+      WHERE user_id = ? 
+      AND id NOT IN (
+        SELECT id FROM translation_history 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC 
+        LIMIT ?
+      )
+    `);
+    const result = await stmt.bind(userId, userId, keepCount).run();
+    return result.meta.changes || 0;
   }
 }

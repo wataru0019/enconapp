@@ -5,6 +5,19 @@ const anthropic = new Anthropic({
 	apiKey: ANTHROPIC_API_KEY,
 });
 
+// Factory function to create Claude client for different environments
+export function createClaude(platform?: App.Platform): Anthropic {
+	// In Cloudflare Workers, we might need to use platform-specific config
+	if (platform?.env?.ANTHROPIC_API_KEY) {
+		return new Anthropic({
+			apiKey: platform.env.ANTHROPIC_API_KEY,
+		});
+	}
+	
+	// Default to environment variable
+	return anthropic;
+}
+
 export interface ChatMessage {
 	role: 'user' | 'assistant';
 	content: string;

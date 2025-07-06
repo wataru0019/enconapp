@@ -67,7 +67,8 @@
 	}
 
 	function handleKeyPress(event: KeyboardEvent) {
-		if (event.key === 'Enter') {
+		if (event.key === 'Enter' && !event.shiftKey) {
+			event.preventDefault();
 			sendMessage();
 		}
 	}
@@ -96,13 +97,13 @@
 		{/if}
 	</div>
 	<div class="chat-input">
-		<input 
-			type="text" 
+		<textarea 
 			bind:value={currentMessage} 
 			placeholder="Type your message in English..." 
-			on:keypress={handleKeyPress}
+			on:keydown={handleKeyPress}
 			disabled={$isLoading}
-		/>
+			rows="1"
+		></textarea>
 		<button on:click={sendMessage} class="send-button" disabled={$isLoading}>→</button>
 	</div>
 </div>
@@ -146,8 +147,9 @@
 <style>
 	.chat-screen {
 		min-height: 100vh;
+		min-height: 100dvh;
 		background: white;
-		padding: 20px;
+		padding: 20px 20px 0;
 		box-sizing: border-box;
 		max-width: 400px;
 		margin: 0 auto;
@@ -207,19 +209,31 @@
 
 	.chat-input {
 		display: flex;
-		align-items: center;
+		align-items: flex-end;
 		background: #f0f0f0;
 		border-radius: 25px;
 		padding: 5px;
-		margin-top: 20px;
+		margin: 20px 0;
+		position: sticky;
+		bottom: 0;
+		background: white;
+		padding: 10px 5px;
+		box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 	}
 
-	.chat-input input {
+	.chat-input textarea {
 		flex: 1;
 		border: none;
-		background: none;
+		background: #f0f0f0;
 		padding: 10px 15px;
 		font-size: 16px;
+		border-radius: 20px;
+		resize: none;
+		max-height: 120px;
+		min-height: 40px;
+		overflow-y: auto;
+		font-family: inherit;
+		line-height: 1.4;
 	}
 
 	.send-button {
@@ -379,9 +393,14 @@
 		}
 	}
 
-	.chat-input input:disabled,
+	.chat-input textarea:disabled,
 	.chat-input button:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
+	}
+
+	.chat-input textarea:focus {
+		outline: none;
+		box-shadow: 0 0 0 2px #4285f4;
 	}
 </style>

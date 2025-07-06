@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { chatHistory } from '$lib/stores/chat';
-	import { isAuthenticated } from '$lib/auth';
+	import { chatHistory, loadChatHistory, loadChatSession } from '$lib/stores/chat';
+	import { isAuthenticated, auth } from '$lib/auth';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
@@ -8,6 +8,9 @@
 		const unsubscribe = isAuthenticated.subscribe(($isAuthenticated) => {
 			if (!$isAuthenticated) {
 				goto('/login');
+			} else {
+				// Load chat history when authenticated
+				loadChatHistory();
 			}
 		});
 		return unsubscribe;
@@ -21,20 +24,40 @@
 		goto('/main');
 	}
 
-	function openChat(session: any) {
-		// In a real app, you might want to load the specific chat session
+	function logout() {
+		auth.logout();
+		goto('/login');
+	}
+
+	async function openChat(session: any) {
+		// Load the specific chat session
+		await loadChatSession(session.id);
 		goto(`/chat?level=${encodeURIComponent(session.level)}`);
 	}
 
-	// Mock data for demonstration
-	const mockHistory = [
-		{ id: '1', level: '初級者', topic: 'Recently stock market', createdAt: new Date() },
-		{ id: '2', level: '初級者', topic: 'Recently stock market', createdAt: new Date() },
-		{ id: '3', level: '初級者', topic: 'Recently stock market', createdAt: new Date() },
-		{ id: '4', level: '初級者', topic: 'Recently stock market', createdAt: new Date() },
-		{ id: '5', level: '初級者', topic: 'Recently stock market', createdAt: new Date() },
-		{ id: '6', level: '初級者', topic: 'Recently stock market', createdAt: new Date() }
-	];
+	function formatDate(dateString: string) {
+		const date = new Date(dateString);
+		return date.toLocaleDateString('ja-JP', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
+
+	function getLevelName(level: string) {
+		switch (level) {
+			case 'beginner':
+				return '初級者';
+			case 'intermediate':
+				return '中級者';
+			case 'advanced':
+				return '上級者';
+			default:
+				return level;
+		}
+	}
 </script>
 
 <div class="history-screen">
@@ -42,19 +65,26 @@
 		<button class="back-button" on:click={goBack}>←</button>
 		<h2>過去のチャット</h2>
 		<div class="header-buttons">
-			<button class="search-button">🔍</button>
-			<button class="user-button">W</button>
+			<button class="logout-button" on:click={logout}>ログアウト</button>
 		</div>
 	</div>
 	<div class="history-list">
-		{#each ($chatHistory.length > 0 ? $chatHistory : mockHistory) as session}
-			<button class="history-item" on:click={() => openChat(session)}>
-				<div class="history-info">
-					<span class="level">レベル：{session.level}</span>
-					<span class="topic">チャット：{session.topic}</span>
-				</div>
-			</button>
-		{/each}
+		{#if $chatHistory.length > 0}
+			{#each $chatHistory as session}
+				<button class="history-item" on:click={() => openChat(session)}>
+					<div class="history-info">
+						<span class="level">レベル：{getLevelName(session.level)}</span>
+						<span class="topic">チャット：{session.topic || 'English Conversation'}</span>
+						<span class="date">{formatDate(session.created_at)}</span>
+					</div>
+				</button>
+			{/each}
+		{:else}
+			<div class="empty-state">
+				<p>まだチャット履歴がありません。</p>
+				<p>新しいチャットを始めましょう！</p>
+			</div>
+		{/if}
 	</div>
 	<button class="new-chat-button" on:click={startNewChat}>+ New Chat</button>
 </div>
@@ -89,17 +119,19 @@
 		gap: 10px;
 	}
 
-	.search-button, .user-button {
-		background: #4285f4;
+	.logout-button {
+		background: #ff4444;
 		color: white;
 		border: none;
-		width: 40px;
-		height: 40px;
-		border-radius: 50%;
+		padding: 8px 16px;
+		border-radius: 20px;
+		font-size: 14px;
 		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		transition: background-color 0.2s;
+	}
+
+	.logout-button:hover {
+		background: #cc3333;
 	}
 
 	.history-list {
@@ -127,9 +159,24 @@
 		gap: 5px;
 	}
 
-	.level, .topic {
+	.level, .topic, .date {
 		font-size: 14px;
 		color: #666;
+	}
+
+	.date {
+		font-size: 12px;
+		color: #999;
+	}
+
+	.empty-state {
+		text-align: center;
+		padding: 40px 20px;
+		color: #666;
+	}
+
+	.empty-state p {
+		margin: 10px 0;
 	}
 
 	.new-chat-button {

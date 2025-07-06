@@ -22,6 +22,14 @@
 		goto('/history');
 	}
 
+	function goToTranslate() {
+		goto('/translate');
+	}
+
+	function goToVocabulary() {
+		goto('/vocabulary');
+	}
+
 	function logout() {
 		auth.logout();
 		goto('/login');
@@ -30,8 +38,8 @@
 
 <div class="main-screen">
 	<div class="header">
-		<button class="back-button" on:click={logout}>←</button>
 		<h1 class="app-title">ECApp</h1>
+		<button class="logout-button" on:click={logout}>ログアウト</button>
 	</div>
 	<div class="content">
 		{#if $user}
@@ -46,18 +54,20 @@
 				<button class="level-button" on:click={() => selectLevel('advanced')}>上級者</button>
 			</div>
 		</div>
-		<div class="topic-section">
-			<p>英語で気になる話題を話かけてみよう</p>
-			<div class="topic-buttons">
-				<button class="topic-button" on:click={() => selectLevel('beginner')}>What do you say "Daihuku" in English?</button>
-				<button class="topic-button" on:click={() => selectLevel('beginner')}>What do you say "Daihuku" in English?</button>
-			</div>
+		<div class="feature-buttons">
+			<button class="feature-button" on:click={goToHistory}>
+				<div class="feature-icon">💬</div>
+				<span>チャット履歴</span>
+			</button>
+			<button class="feature-button" on:click={goToTranslate}>
+				<div class="feature-icon">🔄</div>
+				<span>和英翻訳</span>
+			</button>
+			<button class="feature-button" on:click={goToVocabulary}>
+				<div class="feature-icon">📚</div>
+				<span>単語帳</span>
+			</button>
 		</div>
-		<div class="message-input">
-			<input type="text" placeholder="Type your messages ..." />
-			<button class="send-button">→</button>
-		</div>
-		<button class="history-button" on:click={goToHistory}>Chat History</button>
 	</div>
 </div>
 
@@ -75,16 +85,24 @@
 	.header {
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		margin-bottom: 30px;
 		position: relative;
 	}
 
-	.back-button {
-		background: none;
+	.logout-button {
+		background: #ff4444;
+		color: white;
 		border: none;
-		font-size: 24px;
+		padding: 8px 16px;
+		border-radius: 20px;
+		font-size: 14px;
 		cursor: pointer;
-		margin-right: 20px;
+		transition: background-color 0.2s;
+	}
+
+	.logout-button:hover {
+		background: #cc3333;
 	}
 
 	.app-title {
@@ -126,59 +144,52 @@
 		cursor: pointer;
 	}
 
-	.topic-section {
-		margin: 30px 0;
+
+	.feature-buttons {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 15px;
+		margin-top: 30px;
 	}
 
-	.topic-buttons {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		margin-top: 10px;
-	}
-
-	.topic-button {
-		padding: 15px;
-		background: #e8f0fe;
-		border: none;
-		border-radius: 20px;
-		text-align: left;
+	.feature-button {
+		background: white;
+		border: 2px solid #4285f4;
+		color: #4285f4;
+		padding: 20px;
+		border-radius: 15px;
 		cursor: pointer;
-	}
-
-	.message-input {
 		display: flex;
 		align-items: center;
-		background: #f0f0f0;
-		border-radius: 25px;
-		padding: 5px;
-		margin-top: 20px;
+		gap: 15px;
+		transition: all 0.3s ease;
+		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 	}
 
-	.message-input input {
-		flex: 1;
-		border: none;
-		background: none;
-		padding: 10px 15px;
-		font-size: 16px;
-	}
-
-	.send-button {
-		background: none;
-		border: none;
-		font-size: 18px;
-		cursor: pointer;
-		padding: 10px;
-	}
-
-	.history-button {
+	.feature-button:hover {
 		background: #4285f4;
 		color: white;
-		border: none;
-		padding: 12px 24px;
-		border-radius: 25px;
-		margin-top: 20px;
-		cursor: pointer;
-		width: 100%;
+		transform: translateY(-2px);
+		box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);
+	}
+
+	.feature-icon {
+		font-size: 24px;
+		width: 40px;
+		height: 40px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #f0f8ff;
+		border-radius: 10px;
+	}
+
+	.feature-button:hover .feature-icon {
+		background: rgba(255, 255, 255, 0.2);
+	}
+
+	.feature-button span {
+		font-size: 16px;
+		font-weight: 600;
 	}
 </style>
