@@ -4,7 +4,7 @@ import type { TranslationHistory, CreateTranslationData } from './types.js';
 export class TranslationHistoryRepository {
 	constructor(private db: Database) {}
 
-	async create(data: CreateTranslationData): Promise<TranslationHistory> {
+	async createTranslation(data: CreateTranslationData): Promise<TranslationHistory> {
 		const stmt = this.db.prepare(`
 			INSERT INTO translation_history (
 				user_id, japanese_text, english_translation, 
@@ -20,15 +20,15 @@ export class TranslationHistoryRepository {
 			data.natural_suggestion || null
 		);
 
-		return this.findById(result.lastInsertRowid as number)!;
+		return (await this.getTranslationById(result.lastInsertRowid as number))!;
 	}
 
-	findById(id: number): TranslationHistory | null {
+	async getTranslationById(id: number): Promise<TranslationHistory | null> {
 		const stmt = this.db.prepare('SELECT * FROM translation_history WHERE id = ?');
 		return stmt.get(id) as TranslationHistory | null;
 	}
 
-	findByUserId(userId: number, limit = 50, offset = 0): TranslationHistory[] {
+	async getTranslationsByUserId(userId: number, limit = 50, offset = 0): Promise<TranslationHistory[]> {
 		const stmt = this.db.prepare(`
 			SELECT * FROM translation_history 
 			WHERE user_id = ? 
@@ -38,13 +38,13 @@ export class TranslationHistoryRepository {
 		return stmt.all(userId, limit, offset) as TranslationHistory[];
 	}
 
-	delete(id: number): boolean {
+	async deleteTranslation(id: number): Promise<boolean> {
 		const stmt = this.db.prepare('DELETE FROM translation_history WHERE id = ?');
 		const result = stmt.run(id);
 		return result.changes > 0;
 	}
 
-	search(userId: number, query: string): TranslationHistory[] {
+	async searchTranslations(userId: number, query: string): Promise<TranslationHistory[]> {
 		const stmt = this.db.prepare(`
 			SELECT * FROM translation_history 
 			WHERE user_id = ? 
@@ -55,13 +55,13 @@ export class TranslationHistoryRepository {
 		return stmt.all(userId, searchPattern, searchPattern) as TranslationHistory[];
 	}
 
-	count(userId: number): number {
+	async countTranslations(userId: number): Promise<number> {
 		const stmt = this.db.prepare('SELECT COUNT(*) as count FROM translation_history WHERE user_id = ?');
 		const result = stmt.get(userId) as { count: number };
 		return result.count;
 	}
 
-	deleteOldEntries(userId: number, keepCount = 100): number {
+	async deleteOldTranslations(userId: number, keepCount = 100): Promise<number> {
 		const stmt = this.db.prepare(`
 			DELETE FROM translation_history 
 			WHERE user_id = ? 

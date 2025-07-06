@@ -4,7 +4,7 @@ import type { VocabularyWord, CreateVocabularyData, UpdateVocabularyData } from 
 export class VocabularyRepository {
 	constructor(private db: Database) {}
 
-	async create(data: CreateVocabularyData): Promise<VocabularyWord> {
+	async createVocabulary(data: CreateVocabularyData): Promise<VocabularyWord> {
 		const stmt = this.db.prepare(`
 			INSERT INTO vocabulary (
 				user_id, japanese_word, english_translation, 
@@ -22,15 +22,15 @@ export class VocabularyRepository {
 			data.source || 'manual'
 		);
 
-		return this.findById(result.lastInsertRowid as number)!;
+		return (await this.getVocabularyById(result.lastInsertRowid as number))!;
 	}
 
-	findById(id: number): VocabularyWord | null {
+	async getVocabularyById(id: number): Promise<VocabularyWord | null> {
 		const stmt = this.db.prepare('SELECT * FROM vocabulary WHERE id = ?');
 		return stmt.get(id) as VocabularyWord | null;
 	}
 
-	findByUserId(userId: number, limit = 50, offset = 0): VocabularyWord[] {
+	async getVocabularyByUserId(userId: number, limit = 50, offset = 0): Promise<VocabularyWord[]> {
 		const stmt = this.db.prepare(`
 			SELECT * FROM vocabulary 
 			WHERE user_id = ? 
@@ -40,7 +40,7 @@ export class VocabularyRepository {
 		return stmt.all(userId, limit, offset) as VocabularyWord[];
 	}
 
-	findByCategory(userId: number, category: string): VocabularyWord[] {
+	async getVocabularyByCategory(userId: number, category: string): Promise<VocabularyWord[]> {
 		const stmt = this.db.prepare(`
 			SELECT * FROM vocabulary 
 			WHERE user_id = ? AND category = ? 
@@ -59,7 +59,7 @@ export class VocabularyRepository {
 		return stmt.all(userId).map((row: any) => row.category);
 	}
 
-	update(id: number, data: UpdateVocabularyData): VocabularyWord | null {
+	async updateVocabulary(id: number, data: UpdateVocabularyData): Promise<VocabularyWord | null> {
 		const updateFields = [];
 		const values = [];
 
@@ -85,7 +85,7 @@ export class VocabularyRepository {
 		}
 
 		if (updateFields.length === 0) {
-			return this.findById(id);
+			return await this.getVocabularyById(id);
 		}
 
 		updateFields.push('updated_at = CURRENT_TIMESTAMP');
@@ -98,16 +98,16 @@ export class VocabularyRepository {
 		`);
 		
 		stmt.run(...values);
-		return this.findById(id);
+		return await this.getVocabularyById(id);
 	}
 
-	delete(id: number): boolean {
+	async deleteVocabulary(id: number): Promise<boolean> {
 		const stmt = this.db.prepare('DELETE FROM vocabulary WHERE id = ?');
 		const result = stmt.run(id);
 		return result.changes > 0;
 	}
 
-	search(userId: number, query: string): VocabularyWord[] {
+	async searchVocabulary(userId: number, query: string): Promise<VocabularyWord[]> {
 		const stmt = this.db.prepare(`
 			SELECT * FROM vocabulary 
 			WHERE user_id = ? 
@@ -118,7 +118,7 @@ export class VocabularyRepository {
 		return stmt.all(userId, searchPattern, searchPattern, searchPattern) as VocabularyWord[];
 	}
 
-	count(userId: number): number {
+	async countVocabulary(userId: number): Promise<number> {
 		const stmt = this.db.prepare('SELECT COUNT(*) as count FROM vocabulary WHERE user_id = ?');
 		const result = stmt.get(userId) as { count: number };
 		return result.count;
