@@ -22,6 +22,14 @@
 		goto('/history');
 	}
 
+	function goToTranslate() {
+		goto('/translate');
+	}
+
+	function goToVocabulary() {
+		goto('/vocabulary');
+	}
+
 	function logout() {
 		auth.logout();
 		goto('/login');
@@ -46,7 +54,20 @@
 				<button class="level-button" on:click={() => selectLevel('advanced')}>上級者</button>
 			</div>
 		</div>
-		<button class="history-button" on:click={goToHistory}>Chat History</button>
+		<div class="feature-buttons">
+			<button class="feature-button" on:click={goToHistory}>
+				<div class="feature-icon">💬</div>
+				<span>チャット履歴</span>
+			</button>
+			<button class="feature-button" on:click={goToTranslate}>
+				<div class="feature-icon">🔄</div>
+				<span>和英翻訳</span>
+			</button>
+			<button class="feature-button" on:click={goToVocabulary}>
+				<div class="feature-icon">📚</div>
+				<span>単語帳</span>
+			</button>
+		</div>
 	</div>
 </div>
 
@@ -124,14 +145,51 @@
 	}
 
 
-	.history-button {
+	.feature-buttons {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 15px;
+		margin-top: 30px;
+	}
+
+	.feature-button {
+		background: white;
+		border: 2px solid #4285f4;
+		color: #4285f4;
+		padding: 20px;
+		border-radius: 15px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 15px;
+		transition: all 0.3s ease;
+		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	}
+
+	.feature-button:hover {
 		background: #4285f4;
 		color: white;
-		border: none;
-		padding: 12px 24px;
-		border-radius: 25px;
-		margin-top: 20px;
-		cursor: pointer;
-		width: 100%;
+		transform: translateY(-2px);
+		box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);
+	}
+
+	.feature-icon {
+		font-size: 24px;
+		width: 40px;
+		height: 40px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #f0f8ff;
+		border-radius: 10px;
+	}
+
+	.feature-button:hover .feature-icon {
+		background: rgba(255, 255, 255, 0.2);
+	}
+
+	.feature-button span {
+		font-size: 16px;
+		font-weight: 600;
 	}
 </style>

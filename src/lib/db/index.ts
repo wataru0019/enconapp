@@ -6,7 +6,9 @@ export { getD1Database, initializeD1Database, initializeD1Schema, isCloudflareEn
 export { UserRepository } from './users.js';
 export { ChatSessionRepository } from './chat-sessions.js';
 export { MessageRepository } from './messages.js';
-export { UserRepositoryD1, ChatSessionRepositoryD1, MessageRepositoryD1 } from './repositories-d1.js';
+export { VocabularyRepository } from './vocabulary.js';
+export { TranslationHistoryRepository } from './translation-history.js';
+export { UserRepositoryD1, ChatSessionRepositoryD1, MessageRepositoryD1, VocabularyRepositoryD1, TranslationHistoryRepositoryD1 } from './repositories-d1.js';
 
 // Type exports
 export type * from './types.js';
@@ -15,8 +17,11 @@ export type * from './types.js';
 import { UserRepository } from './users.js';
 import { ChatSessionRepository } from './chat-sessions.js';
 import { MessageRepository } from './messages.js';
-import { UserRepositoryD1, ChatSessionRepositoryD1, MessageRepositoryD1 } from './repositories-d1.js';
+import { VocabularyRepository } from './vocabulary.js';
+import { TranslationHistoryRepository } from './translation-history.js';
+import { UserRepositoryD1, ChatSessionRepositoryD1, MessageRepositoryD1, VocabularyRepositoryD1, TranslationHistoryRepositoryD1 } from './repositories-d1.js';
 import { isCloudflareEnvironment } from './database-d1.js';
+import { getDatabase } from './database.js';
 
 // Environment-aware repository factory
 function createRepositories() {
@@ -34,15 +39,20 @@ function createRepositories() {
     return {
       userRepo: new UserRepositoryD1(),
       chatSessionRepo: new ChatSessionRepositoryD1(),
-      messageRepo: new MessageRepositoryD1()
+      messageRepo: new MessageRepositoryD1(),
+      vocabularyRepo: new VocabularyRepositoryD1(),
+      translationHistoryRepo: new TranslationHistoryRepositoryD1()
     };
   } else {
     console.log('Using SQLite repositories for development');
     // Use SQLite repositories in development
+    const db = getDatabase();
     return {
       userRepo: new UserRepository(),
       chatSessionRepo: new ChatSessionRepository(),
-      messageRepo: new MessageRepository()
+      messageRepo: new MessageRepository(),
+      vocabularyRepo: new VocabularyRepository(db),
+      translationHistoryRepo: new TranslationHistoryRepository(db)
     };
   }
 }
@@ -52,3 +62,5 @@ const repositories = createRepositories();
 export const userRepo = repositories.userRepo;
 export const chatSessionRepo = repositories.chatSessionRepo;
 export const messageRepo = repositories.messageRepo;
+export const vocabularyRepo = repositories.vocabularyRepo;
+export const translationHistoryRepo = repositories.translationHistoryRepo;
