@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { createClaude } from '$lib/services/claude';
 import { userRepo, translationHistoryRepo } from '$lib/db';
 import { verifyToken } from '$lib/auth/jwt';
+import { JWT_SECRET } from '$env/static/private';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -14,7 +15,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		// Verify JWT token
 		const token = authHeader.substring(7);
-		const decoded = verifyToken(token);
+		
+		// Use JWT_SECRET from platform or fallback
+		const jwtSecret = platform?.env?.JWT_SECRET || JWT_SECRET;
+		
+		const decoded = verifyToken(token, jwtSecret);
 		if (!decoded) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}

@@ -2,9 +2,10 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { userRepo, vocabularyRepo } from '$lib/db';
 import { verifyToken } from '$lib/auth/jwt';
+import { JWT_SECRET } from '$env/static/private';
 
 // GET - Fetch user's vocabulary
-export const GET: RequestHandler = async ({ request, url }) => {
+export const GET: RequestHandler = async ({ request, url, platform }) => {
 	try {
 		// Get authorization header
 		const authHeader = request.headers.get('authorization');
@@ -14,7 +15,11 @@ export const GET: RequestHandler = async ({ request, url }) => {
 
 		// Verify JWT token
 		const token = authHeader.substring(7);
-		const decoded = verifyToken(token);
+		
+		// Use JWT_SECRET from platform or fallback
+		const jwtSecret = platform?.env?.JWT_SECRET || JWT_SECRET;
+		
+		const decoded = verifyToken(token, jwtSecret);
 		if (!decoded) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
@@ -64,7 +69,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 };
 
 // POST - Create new vocabulary word
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		// Get authorization header
 		const authHeader = request.headers.get('authorization');
@@ -74,7 +79,11 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		// Verify JWT token
 		const token = authHeader.substring(7);
-		const decoded = verifyToken(token);
+		
+		// Use JWT_SECRET from platform or fallback
+		const jwtSecret = platform?.env?.JWT_SECRET || JWT_SECRET;
+		
+		const decoded = verifyToken(token, jwtSecret);
 		if (!decoded) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
