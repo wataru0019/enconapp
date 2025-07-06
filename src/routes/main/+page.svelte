@@ -30,8 +30,8 @@
 
 <div class="main-screen">
 	<div class="header">
-		<button class="back-button" on:click={logout}>←</button>
 		<h1 class="app-title">ECApp</h1>
+		<button class="logout-button" on:click={logout}>ログアウト</button>
 	</div>
 	<div class="content">
 		{#if $user}
@@ -45,17 +45,6 @@
 				<button class="level-button" on:click={() => selectLevel('intermediate')}>中級者</button>
 				<button class="level-button" on:click={() => selectLevel('advanced')}>上級者</button>
 			</div>
-		</div>
-		<div class="topic-section">
-			<p>英語で気になる話題を話かけてみよう</p>
-			<div class="topic-buttons">
-				<button class="topic-button" on:click={() => selectLevel('beginner')}>What do you say "Daihuku" in English?</button>
-				<button class="topic-button" on:click={() => selectLevel('beginner')}>What do you say "Daihuku" in English?</button>
-			</div>
-		</div>
-		<div class="message-input">
-			<input type="text" placeholder="Type your messages ..." />
-			<button class="send-button">→</button>
 		</div>
 		<button class="history-button" on:click={goToHistory}>Chat History</button>
 	</div>
@@ -75,16 +64,24 @@
 	.header {
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		margin-bottom: 30px;
 		position: relative;
 	}
 
-	.back-button {
-		background: none;
+	.logout-button {
+		background: #ff4444;
+		color: white;
 		border: none;
-		font-size: 24px;
+		padding: 8px 16px;
+		border-radius: 20px;
+		font-size: 14px;
 		cursor: pointer;
-		margin-right: 20px;
+		transition: background-color 0.2s;
+	}
+
+	.logout-button:hover {
+		background: #cc3333;
 	}
 
 	.app-title {
@@ -126,50 +123,6 @@
 		cursor: pointer;
 	}
 
-	.topic-section {
-		margin: 30px 0;
-	}
-
-	.topic-buttons {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		margin-top: 10px;
-	}
-
-	.topic-button {
-		padding: 15px;
-		background: #e8f0fe;
-		border: none;
-		border-radius: 20px;
-		text-align: left;
-		cursor: pointer;
-	}
-
-	.message-input {
-		display: flex;
-		align-items: center;
-		background: #f0f0f0;
-		border-radius: 25px;
-		padding: 5px;
-		margin-top: 20px;
-	}
-
-	.message-input input {
-		flex: 1;
-		border: none;
-		background: none;
-		padding: 10px 15px;
-		font-size: 16px;
-	}
-
-	.send-button {
-		background: none;
-		border: none;
-		font-size: 18px;
-		cursor: pointer;
-		padding: 10px;
-	}
 
 	.history-button {
 		background: #4285f4;
